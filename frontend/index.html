@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta AI System - Chat Interface</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Meta AI System</h1>
+            <p>Domain Expert Analysis → Workflow Creation → Agent Execution</p>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="system-message">
+                    <div class="message-content">
+                        <strong>🎯 Meta AI System Ready</strong>
+                        <p>Enter your query to begin domain expert analysis and document generation.</p>
+                        <p>Supported: Text prompts and file uploads (PDF, TXT, DOCX)</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="process-logs" id="processLogs">
+                <div class="logs-header">
+                    <h3>📋 Process Logs</h3>
+                    <button id="toggleLogs" class="toggle-btn">Show Logs</button>
+                </div>
+                <div class="logs-content" id="logsContent" style="display: none;">
+                    <!-- Process logs will appear here -->
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="file-upload-area" id="fileUploadArea">
+                    <input type="file" id="fileInput" accept=".pdf,.txt,.docx" multiple>
+                    <label for="fileInput" class="file-label">
+                        📎 Upload Files (Optional)
+                    </label>
+                    <div class="uploaded-files" id="uploadedFiles"></div>
+                </div>
+                
+                <div class="chat-input-area">
+                    <textarea id="userInput" placeholder="Enter your query or prompt..." rows="3"></textarea>
+                    <button id="sendButton" onclick="sendMessage()">
+                        <span id="sendIcon">🚀</span>
+                        <span id="sendText">Send</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar" id="statusBar">
+            <span id="statusText">Ready</span>
+            <div class="loading-spinner" id="loadingSpinner" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- JSON Viewer Modal -->
+    <div id="jsonModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeJsonModal()">&times;</span>
+            <h2>📄 JSON Data</h2>
+            <pre id="jsonContent"></pre>
+            <button onclick="downloadJson()" class="download-btn">📥 Download JSON</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
