@@ -8,8 +8,13 @@ const API_BASE_URL = 'http://localhost:5000/api';
 
 // HARDCODED FILE PATHS - Default locations where files are saved
 const DEFAULT_FILE_PATHS = {
-    // Document paths
-    PDF_DOCUMENTS: 'C:\\Users\\nihca\\OneDrive\\Documents\\vscode\\Meta_Ai model\\outputs\\documents\\',
+    // Document    // Display workflow diagram path instead of image
+    if (result.visual_content?.workflow_diagram_base64) {
+        responseHtml += `
+            <p><strong>🔄 Workflow Diagram Generated:</strong></p>
+            <p class="file-path" style="font-family: monospace; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; color: #9ae6b4; margin: 10px 0;">${DEFAULT_FILE_PATHS.WORKFLOW_DIAGRAMS}${DEFAULT_FILE_PATHS.DEFAULT_DIAGRAM_NAME}</p>
+        `;
+    }   PDF_DOCUMENTS: 'C:\\Users\\nihca\\OneDrive\\Documents\\vscode\\Meta_Ai model\\outputs\\documents\\',
     WORD_DOCUMENTS: 'C:\\Users\\nihca\\OneDrive\\Documents\\vscode\\Meta_Ai model\\outputs\\documents\\',
     POWERPOINT_PRESENTATIONS: 'C:\\Users\\nihca\\OneDrive\\Documents\\vscode\\Meta_Ai model\\outputs\\presentations\\',
     
@@ -271,44 +276,40 @@ function readFileContent(file) {
 function handleBackendResponse(result) {
     addLogEntry('success', `Workflow completed. Conversation ID: ${result.conversation_id}`);
     
-    // Store data for modal viewing
+    // Store data for modal viewing (but prioritize visual display)
     currentJsonData = result;
     
-    // Create response message with file paths instead of visual content
+    // Create response message with visual content
     let responseHtml = `
         <strong>🎉 Meta AI Analysis Complete</strong>
         <p><strong>Conversation ID:</strong> ${result.conversation_id}</p>
         <p><strong>Workflow Type:</strong> ${result.workflow_type || 'Auto-determined'}</p>
     `;
     
-    // Show file paths instead of trying to display images/documents
-    if (result.visual_content) {
-        responseHtml += displayVisualContent(result.visual_content, result.workflow_type);
-    } else {
-        // Show default paths even if no visual content is returned
+    // Domain analysis summary hidden as requested
+    /*
+    if (result.domain_outputs) {
+        responseHtml += '<br><strong>📊 Domain Analysis Summary:</strong><ul>';
+        Object.entries(result.domain_outputs).forEach(([domain, output]) => {
+            responseHtml += `<li><strong>${domain.charAt(0).toUpperCase() + domain.slice(1)}:</strong> ${output.key_findings?.length || 0} findings, ${output.recommendations?.length || 0} recommendations</li>`;
+        });
+        responseHtml += '</ul>';
+    }
+    */
+    
+    // Display workflow diagram (always shown)
+    if (result.visual_content?.workflow_diagram_base64) {
         responseHtml += `
-            <div class="file-paths-section">
-                <h3>📁 Default File Locations</h3>
-                <div class="file-paths-container">
-                    <div class="file-path-item">
-                        <span class="file-icon">📄</span>
-                        <div class="file-info">
-                            <strong>Analysis Report:</strong>
-                            <p class="file-path">${DEFAULT_FILE_PATHS.PDF_DOCUMENTS}${DEFAULT_FILE_PATHS.DEFAULT_DOCUMENT_NAME}</p>
-                            <small>Generated analysis document</small>
-                        </div>
-                    </div>
-                    <div class="file-path-item">
-                        <span class="file-icon">📊</span>
-                        <div class="file-info">
-                            <strong>Data Output:</strong>
-                            <p class="file-path">${DEFAULT_FILE_PATHS.CSV_FILES}${DEFAULT_FILE_PATHS.DEFAULT_CSV_NAME}</p>
-                            <small>Analysis data and metrics</small>
-                        </div>
-                    </div>
-                </div>
+            <div class="visual-content">
+                <h3>� Workflow Process</h3>
+                <img src="${result.visual_content.workflow_diagram_base64}" alt="Workflow Diagram" class="workflow-image">
             </div>
         `;
+    }
+    
+    // Display content based on workflow type
+    if (result.visual_content) {
+        responseHtml += displayVisualContent(result.visual_content, result.workflow_type);
     }
     
     // Add option to view technical details
