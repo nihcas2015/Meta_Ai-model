@@ -1,0 +1,9 @@
+flask==2.0.1
+Werkzeug==2.0.1
+Pillow==8.3.1
+pytesseract==0.3.8
+PyPDF2==3.0.1
+python-docx==0.8.11
+opencv-python==4.5.3.56
+numpy==1.21.2
+SpeechRecognition==3.8.1

@@ -1,0 +1,242 @@
+// DOM Elements
+document.addEventListener('DOMContentLoaded', () => {
+    const messagesContainer = document.getElementById('messages');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const fileInput = document.getElementById('fileInput');
+    const logPopup = document.getElementById('logPopup');
+    const logBody = document.getElementById('logBody');
+
+    // State management
+    let currentUploadedFile = null;
+    let currentFileContent = null;
+    let processingLogs = [];
+
+    // Auto-resize textarea
+    userInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+    });
+
+    // Initialize send button click handler
+    sendBtn.addEventListener('click', () => {
+        const message = userInput.value.trim();
+        if (message) {
+            sendMessage(message);
+            userInput.value = '';
+            userInput.style.height = 'auto';
+        }
+    });
+
+    // Initialize keyboard shortcuts
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendBtn.click();
+        }
+    });
+
+    // Send message function
+    async function sendMessage(content, type = 'text') {
+        // Add user message to chat
+        addMessageToChat(content, 'user');
+
+        // Show processing message
+        const processingId = showProcessingMessage();
+
+        try {
+            // Prepare message data
+            const messageData = {
+                type: type,
+                content: content,
+                timestamp: new Date().toISOString()
+            };
+
+            // Add file data if present
+            if (currentUploadedFile && currentFileContent) {
+                messageData.file = {
+                    name: currentUploadedFile.name,
+                    type: currentUploadedFile.type,
+                    content: currentFileContent
+                };
+            }
+
+            // Send to backend
+            const response = await fetch('/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(messageData)
+            });
+
+            const result = await response.json();
+
+            // Remove processing message
+            removeProcessingMessage(processingId);
+
+            if (result.error) {
+                addMessageToChat('Error: ' + result.error, 'error');
+                return;
+            }
+
+            // Add bot response
+            const botMessage = addMessageToChat(result.response || 'No response received', 'bot');
+            
+            // Add glow animation
+            botMessage.classList.add('active-glow');
+            setTimeout(() => botMessage.classList.remove('active-glow'), 2000);
+
+            // Clear current file
+            currentUploadedFile = null;
+            currentFileContent = null;
+
+        } catch (error) {
+            console.error('Error processing message:', error);
+            removeProcessingMessage(processingId);
+            addMessageToChat('An error occurred. Please try again.', 'error');
+        }
+    }
+
+    // File upload handling
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            currentUploadedFile = file;
+            const processingId = showProcessingMessage();
+
+            // Process based on file type
+            if (file.type.includes('image')) {
+                await processImage(file);
+            } else if (file.type.includes('pdf')) {
+                await processPDF(file);
+            } else if (file.type.includes('document')) {
+                await processDocument(file);
+            } else {
+                throw new Error('Unsupported file type');
+            }
+
+            removeProcessingMessage(processingId);
+            addMessageToChat(`File uploaded: ${file.name}`, 'system');
+            
+        } catch (error) {
+            console.error('Error processing file:', error);
+            addMessageToChat('Error processing file. Please try again.', 'error');
+            currentUploadedFile = null;
+            currentFileContent = null;
+        }
+    });
+
+    // Process Image
+    async function processImage(file) {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch('/process_image', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error);
+        
+        userInput.value = result.text;
+        userInput.style.height = userInput.scrollHeight + 'px';
+    }
+
+    // Process PDF
+    async function processPDF(file) {
+        const formData = new FormData();
+        formData.append('pdf', file);
+
+        const response = await fetch('/process_pdf', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error);
+        
+        userInput.value = result.text;
+        userInput.style.height = userInput.scrollHeight + 'px';
+    }
+
+    // Process Document
+    async function processDocument(file) {
+        const formData = new FormData();
+        formData.append('document', file);
+
+        const response = await fetch('/process_document', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error);
+        
+        userInput.value = result.text;
+        userInput.style.height = userInput.scrollHeight + 'px';
+    }
+
+    // Add message to chat
+    function addMessageToChat(content, sender) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}-message fade-in`;
+        messageDiv.textContent = content;
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        return messageDiv;
+    }
+
+    // Show processing message
+    function showProcessingMessage() {
+        const id = Date.now();
+        const processingDiv = document.createElement('div');
+        processingDiv.className = 'message bot-message processing-message fade-in';
+        processingDiv.id = `processing-${id}`;
+        processingDiv.innerHTML = 'Processing...';
+        messagesContainer.appendChild(processingDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        return id;
+    }
+
+    // Remove processing message
+    function removeProcessingMessage(id) {
+        const processingDiv = document.getElementById(`processing-${id}`);
+        if (processingDiv) {
+            processingDiv.remove();
+        }
+    }
+
+    // Log popup functions
+    window.showLogPopup = function() {
+        logPopup.style.display = 'flex';
+        updateLogDisplay();
+    };
+
+    window.closeLogPopup = function() {
+        logPopup.style.display = 'none';
+    };
+
+    function updateLogDisplay() {
+        logBody.innerHTML = processingLogs.length 
+            ? processingLogs.map(log => `
+                <div class="log-entry">
+                    <div class="log-time">${new Date(log.timestamp).toLocaleTimeString()}</div>
+                    <div class="log-type">${log.type}</div>
+                    <div class="log-status">${log.status}</div>
+                    <div class="log-details">${log.details}</div>
+                </div>
+            `).join('')
+            : '<div class="no-logs">No processing logs available</div>';
+    }
+
+    // Close popup when clicking outside
+    logPopup.addEventListener('click', (e) => {
+        if (e.target === logPopup) {
+            closeLogPopup();
+        }
+    });
+});
