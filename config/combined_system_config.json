@@ -1,0 +1,29 @@
+{
+  "system_config": {
+    "use_real_ollama": false,
+    "max_retries": 3,
+    "default_workflow": ["diagram", "presentation", "document", "pdf", "code"],
+    "timeout_seconds": 1500
+  },
+  "llm_config": {
+    "model": "llama3.1",
+    "base_url": "http://localhost:11434",
+    "temperature": 0.7,
+    "timeout": 60
+  },
+  "openai_config": {
+    "base_url": "https://openrouter.ai/api/v1",
+    "model": "deepseek/deepseek-chat-v3.1:free",
+    "timeout": 30
+  },
+  "domain_experts": {
+    "enabled": ["mechanical", "electrical", "programming"],
+    "save_prompts": true,
+    "save_analyses": true
+  },
+  "document_generation": {
+    "enabled_types": ["pdf", "diagram", "presentation", "document", "code"],
+    "output_directory": "./data",
+    "cleanup_temp_files": true
+  }
+}
