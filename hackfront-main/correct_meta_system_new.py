@@ -87,6 +87,7 @@ class DomainExpertInput:
     context: Optional[Dict[str, Any]] = None
 
 @dataclass 
+@dataclass
 class DomainExpertOutput:
     """Output from domain expert analysis"""
     domain: str
@@ -94,6 +95,7 @@ class DomainExpertOutput:
     recommendations: List[str]
     key_findings: List[str]
     next_steps: List[str]
+    confidence_score: float = 0.85  # Default confidence score
 
 @dataclass
 class WorkflowStep:
@@ -193,7 +195,8 @@ Analysis:"""
                 analysis=analysis_text,
                 recommendations=recommendations,
                 key_findings=key_findings,
-                next_steps=next_steps
+                next_steps=next_steps,
+                confidence_score=0.88
             )
             
         except Exception as e:
@@ -259,7 +262,8 @@ Analysis:"""
                 analysis=analysis_text,
                 recommendations=recommendations,
                 key_findings=key_findings,
-                next_steps=next_steps
+                next_steps=next_steps,
+                confidence_score=0.90
             )
             
         except Exception as e:
@@ -325,7 +329,8 @@ Analysis:"""
                 analysis=analysis_text,
                 recommendations=recommendations,
                 key_findings=key_findings,
-                next_steps=next_steps
+                next_steps=next_steps,
+                confidence_score=0.87
             )
             
         except Exception as e:
