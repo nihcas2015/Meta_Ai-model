@@ -253,7 +253,8 @@ function handleBackendResponse(result) {
         <p><strong>Workflow Type:</strong> ${result.workflow_type || 'Auto-determined'}</p>
     `;
     
-    // Add domain analysis summary
+    // Domain analysis summary hidden as requested
+    /*
     if (result.domain_outputs) {
         responseHtml += '<br><strong>📊 Domain Analysis Summary:</strong><ul>';
         Object.entries(result.domain_outputs).forEach(([domain, output]) => {
@@ -261,6 +262,7 @@ function handleBackendResponse(result) {
         });
         responseHtml += '</ul>';
     }
+    */
     
     // Display workflow diagram (always shown)
     if (result.visual_content?.workflow_diagram_base64) {
