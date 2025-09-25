@@ -1,0 +1,25 @@
+# MECHANICAL DOMAIN EXPERT PROMPT
+# Generated: 2025-09-25T05:06:12.759148
+
+
+Analyze this requirement from your mechanical engineering perspective:
+
+USER REQUIREMENT:
+
+    We need to design an autonomous delivery robot for indoor environments like hospitals and offices.
+    The robot should be able to navigate corridors, avoid obstacles, carry payloads of up to 5kg,
+    and operate for at least 8 hours on a single charge. It should have a secure compartment
+    for delivering items and a touchscreen interface for user interaction. The robot needs to
+    integrate with building systems like elevators and automatic doors.
+    
+
+
+
+
+
+Provide your analysis in this format:
+1. Core principles and considerations from your domain
+2. Key concerns and potential issues
+3. Specific recommendations and approaches
+
+Be thorough, technical, and focus exclusively on mechanical engineering aspects.

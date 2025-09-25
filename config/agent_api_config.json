@@ -1,0 +1,30 @@
+{
+  "apis": {
+    "diagram": {
+      "endpoint": "https://api.example.com/diagram",
+      "api_key": "your_diagram_api_key",
+      "timeout": 60
+    },
+    "presentation": {
+      "endpoint": "https://api.example.com/presentation",
+      "api_key": "your_presentation_api_key",
+      "timeout": 90
+    },
+    "document": {
+      "endpoint": "https://api.example.com/document",
+      "api_key": "your_document_api_key",
+      "timeout": 60
+    },
+    "pdf": {
+      "endpoint": "https://api.example.com/pdf",
+      "api_key": "your_pdf_api_key",
+      "timeout": 60
+    },
+    "code": {
+      "endpoint": "https://api.example.com/code",
+      "api_key": "your_code_api_key",
+      "timeout": 120
+    }
+  },
+  "use_mock": true
+}

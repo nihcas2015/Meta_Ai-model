@@ -1,0 +1,52 @@
+# DIAGRAM AGENT PROMPT
+# Generated: 2025-09-25T05:53:47.864949
+# Step ID: step_1_diagram
+
+**Optimized Prompt for Architecture Diagram Generator**
+
+Create an architecture diagram that showcases the autonomous delivery robot's design, incorporating the following key components and functionalities:
+
+1.  **Robot Body:** Represented as a rectangular box with a secure compartment at the front, capable of carrying payloads up to 5kg.
+2.  **Navigation System:**
+    *   A combination of lidar sensors for accurate navigation and computer vision algorithms for obstacle detection and avoidance.
+3.  **Power Source:** An efficient battery system that provides at least 8 hours of operation on a single charge.
+4.  **Touchscreen Interface:** Integrated into the robot's control system, allowing users to interact with the device via a user-friendly interface.
+5.  **Integration with Building Systems:**
+    *   Direct integration with elevators and automatic doors for seamless navigation.
+
+**Diagram Type:** System Architecture Diagram
+
+**Notation and Symbols:**
+
+*   Use standard UML notation and symbols for classes, objects, and relationships.
+*   Represent the robot's body as a rectangular box with a secure compartment.
+*   Show the navigation system as a combination of lidar sensors and computer vision algorithms.
+*   Illustrate the power source as an efficient battery system.
+*   Display the touchscreen interface as a user-friendly interaction model.
+*   Represent the integration with building systems using standard UML notation.
+
+**Component Relationships and Data Flows:**
+
+1.  **Payload Carrying:** The robot's body is connected to the payload, which is carried by the robot's wheels or a separate carrying mechanism.
+2.  **Navigation:** The navigation system provides data to the control system, which uses this information to determine the robot's movement.
+3.  **Power Source:** The power source provides energy to the control system and other components.
+4.  **Touchscreen Interface:** The touchscreen interface receives input from users and sends commands to the control system.
+
+**Scalability and Maintainability:**
+
+1.  **Modular Design:** Use a modular design approach to facilitate easy maintenance and upgrades.
+2.  **Standardized Components:** Use standardized components whenever possible to simplify integration with other systems.
+3.  **Flexibility:** Incorporate flexibility into the design to accommodate changing requirements or new technologies.
+
+**Design Considerations:**
+
+1.  **Safety:** Ensure the robot's design prioritizes safety, including features like obstacle avoidance and secure compartment.
+2.  **Efficiency:** Optimize the robot's power consumption and energy efficiency for extended operation times.
+3.  **User Experience:** Design a user-friendly interface that provides an intuitive experience for users.
+
+**Previous Agent Work:**
+
+1.  **Autonomous Navigation:** Leverage insights from previous agents' work on autonomous navigation, such as lidar sensor integration and computer vision algorithms.
+2.  **Building System Integration:** Build upon the knowledge gained from integrating with building systems, ensuring seamless communication between the robot and the infrastructure.
+
+By incorporating these recommendations, the generated architecture diagram will effectively showcase the autonomous delivery robot's design, highlighting its key components and functionalities while emphasizing scalability, maintainability, and user experience.
