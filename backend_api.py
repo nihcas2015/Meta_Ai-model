@@ -297,10 +297,16 @@ def process_request():
         
         # Generate Visual Content
         process_logger.add_log('info', 'Generating visual content and previews...', 'VISUAL_GENERATOR')
+        
+        # Convert domain outputs to dict format for visual generator
+        domain_outputs_dict = {}
+        for domain, output in meta_result['domain_outputs'].items():
+            domain_outputs_dict[domain] = asdict(output)
+        
         visual_content = visual_generator.create_visual_summary(
             meta_result.get('workflow_type', 'pdf'),
             api_request.user_query,
-            meta_result['domain_outputs'],
+            domain_outputs_dict,
             meta_result['conversation_id']
         )
         process_logger.add_log('success', f'Visual content generated: {len(visual_content.get("generated_visuals", []))} items', 'VISUAL_GENERATOR')
@@ -475,18 +481,33 @@ def create_comprehensive_summary(meta_result: Dict, api_request: APIRequest, pro
     
     # Analyze domain outputs
     for domain, output in meta_result.get('domain_outputs', {}).items():
+        # If output is a dataclass, access attributes directly
+        # If output is a dict, use get() method
+        if hasattr(output, 'analysis'):
+            # It's a dataclass object
+            analysis_text = output.analysis or ""
+            key_findings = output.key_findings or []
+            recommendations = output.recommendations or []
+            next_steps = output.next_steps or []
+        else:
+            # It's a dictionary
+            analysis_text = output.get('analysis', "")
+            key_findings = output.get('key_findings', [])
+            recommendations = output.get('recommendations', [])
+            next_steps = output.get('next_steps', [])
+        
         summary['domain_analysis'][domain] = {
-            'analysis_length': len(output.analysis),
-            'key_findings_count': len(output.key_findings),
-            'recommendations_count': len(output.recommendations),
-            'next_steps_count': len(output.next_steps),
-            'key_findings': output.key_findings[:3],  # Top 3 findings
-            'top_recommendations': output.recommendations[:3]  # Top 3 recommendations
+            'analysis_length': len(analysis_text),
+            'key_findings_count': len(key_findings),
+            'recommendations_count': len(recommendations),
+            'next_steps_count': len(next_steps),
+            'key_findings': key_findings[:3],  # Top 3 findings
+            'top_recommendations': recommendations[:3]  # Top 3 recommendations
         }
         
         # Update statistics
-        summary['statistics']['total_recommendations'] += len(output.recommendations)
-        summary['statistics']['total_findings'] += len(output.key_findings)
+        summary['statistics']['total_recommendations'] += len(recommendations)
+        summary['statistics']['total_findings'] += len(key_findings)
     
     process_logger.add_log('success', 'Comprehensive summary created', 'SUMMARY')
     return summary
