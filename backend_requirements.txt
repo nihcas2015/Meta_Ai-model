@@ -1,5 +1,5 @@
 # Backend API Requirements for Meta AI System
-# Frontend-Backend Integration
+# Frontend-Backend Integration with Visual Content Generation
 
 # Core LangChain components (for Meta System)
 langchain>=0.1.0
@@ -12,6 +12,13 @@ ollama>=0.1.7
 Flask>=2.3.0
 flask-cors>=4.0.0
 
+# Visual content generation libraries
+matplotlib>=3.7.0
+seaborn>=0.12.0
+Pillow>=10.0.0
+networkx>=3.1.0
+numpy>=1.24.0
+
 # Standard library dependencies (already included in Python)
 # - pathlib
 # - json  
@@ -21,3 +28,5 @@ flask-cors>=4.0.0
 # - dataclasses
 # - typing
 # - datetime
+# - base64
+# - io

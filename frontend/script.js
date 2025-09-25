@@ -243,15 +243,14 @@ function readFileContent(file) {
 function handleBackendResponse(result) {
     addLogEntry('success', `Workflow completed. Conversation ID: ${result.conversation_id}`);
     
-    // Store JSON data for modal viewing
+    // Store data for modal viewing (but prioritize visual display)
     currentJsonData = result;
     
-    // Create response message
+    // Create response message with visual content
     let responseHtml = `
         <strong>🎉 Meta AI Analysis Complete</strong>
         <p><strong>Conversation ID:</strong> ${result.conversation_id}</p>
         <p><strong>Workflow Type:</strong> ${result.workflow_type || 'Auto-determined'}</p>
-        <p><strong>Generated File:</strong> ${result.generated_file || 'N/A'}</p>
     `;
     
     // Add domain analysis summary
@@ -263,12 +262,25 @@ function handleBackendResponse(result) {
         responseHtml += '</ul>';
     }
     
-    // Add JSON preview
+    // Display workflow diagram (always shown)
+    if (result.visual_content?.workflow_diagram_base64) {
+        responseHtml += `
+            <div class="visual-content">
+                <h3>� Workflow Process</h3>
+                <img src="${result.visual_content.workflow_diagram_base64}" alt="Workflow Diagram" class="workflow-image">
+            </div>
+        `;
+    }
+    
+    // Display content based on workflow type
+    if (result.visual_content) {
+        responseHtml += displayVisualContent(result.visual_content, result.workflow_type);
+    }
+    
+    // Add option to view technical details
     responseHtml += `
         <div class="json-preview">
-            <strong>📄 Complete JSON Response:</strong>
-            <pre>${JSON.stringify(result.summary || result, null, 2).substring(0, 500)}${JSON.stringify(result.summary || result, null, 2).length > 500 ? '...' : ''}</pre>
-            <button class="expand-btn" onclick="showJsonModal()">🔍 View Full JSON</button>
+            <button class="expand-btn" onclick="showJsonModal()">🔍 View Technical Details</button>
         </div>
     `;
     
@@ -284,6 +296,72 @@ function handleBackendResponse(result) {
     // Clear uploaded files after successful processing
     uploadedFiles = [];
     document.getElementById('uploadedFiles').innerHTML = '';
+}
+
+function displayVisualContent(visualContent, workflowType) {
+    let contentHtml = '';
+    
+    switch(workflowType) {
+        case 'pdf':
+        case 'word':
+            if (visualContent.document_preview_base64) {
+                contentHtml += `
+                    <div class="visual-content">
+                        <h3>📄 Document Preview</h3>
+                        <img src="${visualContent.document_preview_base64}" alt="Document Preview" class="document-image">
+                    </div>
+                `;
+            }
+            break;
+            
+        case 'diagram':
+            if (visualContent.pipeline_diagram_base64) {
+                contentHtml += `
+                    <div class="visual-content">
+                        <h3>📊 System Pipeline Diagram</h3>
+                        <img src="${visualContent.pipeline_diagram_base64}" alt="Pipeline Diagram" class="diagram-image">
+                    </div>
+                `;
+            }
+            break;
+            
+        case 'powerpoint':
+            if (visualContent.powerpoint_slides_base64) {
+                contentHtml += `
+                    <div class="visual-content">
+                        <h3>📽️ PowerPoint Presentation Preview</h3>
+                        <div class="slides-container">
+                `;
+                
+                visualContent.powerpoint_slides_base64.forEach((slide, index) => {
+                    contentHtml += `
+                        <div class="slide-preview">
+                            <p class="slide-title">Slide ${index + 1}</p>
+                            <img src="${slide.base64}" alt="Slide ${index + 1}" class="slide-image" onclick="showSlideModal('${slide.base64}', ${index + 1})">
+                        </div>
+                    `;
+                });
+                
+                contentHtml += `
+                        </div>
+                    </div>
+                `;
+            }
+            break;
+            
+        case 'project':
+            if (visualContent.project_structure_base64) {
+                contentHtml += `
+                    <div class="visual-content">
+                        <h3>💻 Project Structure</h3>
+                        <img src="${visualContent.project_structure_base64}" alt="Project Structure" class="project-image">
+                    </div>
+                `;
+            }
+            break;
+    }
+    
+    return contentHtml;
 }
 
 function addMessage(sender, content, type = 'normal') {
@@ -308,16 +386,33 @@ function addMessage(sender, content, type = 'normal') {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
+function showSlideModal(slideBase64, slideNumber) {
+    const modal = document.getElementById('jsonModal');
+    const jsonContent = document.getElementById('jsonContent');
+    
+    // Replace JSON content with slide image
+    jsonContent.innerHTML = `
+        <h2>📽️ Slide ${slideNumber} Preview</h2>
+        <img src="${slideBase64}" alt="Slide ${slideNumber}" style="max-width: 100%; height: auto;">
+    `;
+    
+    modal.style.display = 'block';
+    addLogEntry('info', `Opened slide ${slideNumber} preview`);
+}
+
 function showJsonModal() {
     if (!currentJsonData) return;
     
     const modal = document.getElementById('jsonModal');
     const jsonContent = document.getElementById('jsonContent');
     
-    jsonContent.textContent = JSON.stringify(currentJsonData, null, 2);
+    jsonContent.innerHTML = `
+        <h2>📄 Technical Details</h2>
+        <pre>${JSON.stringify(currentJsonData, null, 2)}</pre>
+    `;
     modal.style.display = 'block';
     
-    addLogEntry('info', 'Opened JSON viewer');
+    addLogEntry('info', 'Opened technical details viewer');
 }
 
 function closeJsonModal() {

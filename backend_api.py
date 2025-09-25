@@ -32,6 +32,9 @@ sys.path.append(str(Path(__file__).parent))
 # Import our corrected Meta system
 from correct_meta_system import CorrectMetaSystem, DomainExpertOutput, SystemState
 
+# Import visual content generator
+from visual_generator import VisualContentGenerator, image_to_base64
+
 # ==============================================================================
 # CONFIGURATION
 # ==============================================================================
@@ -63,14 +66,17 @@ CORS(app)  # Enable CORS for frontend requests
 
 # Global Meta AI system instance
 meta_system = None
+visual_generator = None
 
 def initialize_meta_system():
     """Initialize the Meta AI system"""
-    global meta_system
+    global meta_system, visual_generator
     try:
         logger.info("🚀 Initializing Meta AI System...")
         meta_system = CorrectMetaSystem()
+        visual_generator = VisualContentGenerator()
         logger.info("✅ Meta AI System initialized successfully")
+        logger.info("✅ Visual Content Generator initialized")
         return True
     except Exception as e:
         logger.error(f"❌ Failed to initialize Meta AI System: {e}")
@@ -117,6 +123,7 @@ class APIResponse:
     workflow_type: str = None
     generated_file: str = None
     summary: Dict = None
+    visual_content: Dict = None  # New: Visual content data
     process_logs: List[ProcessLog] = None
     error_message: str = None
     timestamp: str = None
@@ -288,6 +295,19 @@ def process_request():
         
         process_logger.add_log('success', f'Meta AI workflow completed. Conversation ID: {meta_result["conversation_id"]}', 'WORKFLOW')
         
+        # Generate Visual Content
+        process_logger.add_log('info', 'Generating visual content and previews...', 'VISUAL_GENERATOR')
+        visual_content = visual_generator.create_visual_summary(
+            meta_result.get('workflow_type', 'pdf'),
+            api_request.user_query,
+            meta_result['domain_outputs'],
+            meta_result['conversation_id']
+        )
+        process_logger.add_log('success', f'Visual content generated: {len(visual_content.get("generated_visuals", []))} items', 'VISUAL_GENERATOR')
+        
+        # Convert image paths to base64 for web display
+        visual_content_web = prepare_visual_content_for_web(visual_content, process_logger)
+        
         # Save domain outputs
         domain_outputs_file = storage.save_domain_outputs(
             meta_result['conversation_id'], 
@@ -312,6 +332,7 @@ def process_request():
             workflow_type=meta_result.get('workflow_type', 'auto-determined'),
             generated_file=meta_result.get('generated_file'),
             summary=summary,
+            visual_content=visual_content_web,  # Include visual content
             process_logs=process_logger.get_logs()
         )
         
@@ -336,6 +357,49 @@ def process_request():
             str(e), 
             process_logger
         ), 500
+
+def prepare_visual_content_for_web(visual_content: Dict, process_logger: ProcessLogger) -> Dict[str, Any]:
+    """Convert visual content to web-displayable format with base64 images"""
+    
+    web_content = visual_content.copy()
+    
+    try:
+        # Convert workflow diagram
+        if 'workflow_diagram' in visual_content:
+            web_content['workflow_diagram_base64'] = image_to_base64(visual_content['workflow_diagram'])
+            process_logger.add_log('success', 'Workflow diagram converted for web display', 'VISUAL_CONVERTER')
+        
+        # Convert document preview
+        if 'document_preview' in visual_content:
+            web_content['document_preview_base64'] = image_to_base64(visual_content['document_preview'])
+            process_logger.add_log('success', 'Document preview converted for web display', 'VISUAL_CONVERTER')
+        
+        # Convert pipeline diagram
+        if 'pipeline_diagram' in visual_content:
+            web_content['pipeline_diagram_base64'] = image_to_base64(visual_content['pipeline_diagram'])
+            process_logger.add_log('success', 'Pipeline diagram converted for web display', 'VISUAL_CONVERTER')
+        
+        # Convert PowerPoint slides
+        if 'powerpoint_slides' in visual_content:
+            slide_base64_list = []
+            for slide_path in visual_content['powerpoint_slides']:
+                slide_base64_list.append({
+                    'path': slide_path,
+                    'base64': image_to_base64(slide_path)
+                })
+            web_content['powerpoint_slides_base64'] = slide_base64_list
+            process_logger.add_log('success', f'PowerPoint slides converted: {len(slide_base64_list)} slides', 'VISUAL_CONVERTER')
+        
+        # Convert project structure
+        if 'project_structure' in visual_content:
+            web_content['project_structure_base64'] = image_to_base64(visual_content['project_structure'])
+            process_logger.add_log('success', 'Project structure converted for web display', 'VISUAL_CONVERTER')
+        
+        return web_content
+        
+    except Exception as e:
+        process_logger.add_log('error', f'Error converting visual content: {str(e)}', 'VISUAL_CONVERTER')
+        return visual_content  # Return original if conversion fails
 
 def process_uploaded_files(files: List[Dict], process_logger: ProcessLogger) -> Dict[str, Any]:
     """Process uploaded files and extract content"""
