@@ -1,0 +1,18 @@
+# Requirements for Correct Meta System
+# Combines Meta_model.ipynb and attempt2.py following exact Meta Model workflow
+
+# Core LangChain components
+langchain>=0.1.0
+langchain-community>=0.0.20
+
+# Ollama integration for llama3.2 (NO MOCKS)
+ollama>=0.1.7
+
+# Standard library dependencies (already included in Python)
+# - pathlib
+# - json  
+# - uuid
+# - time
+# - logging
+# - dataclasses
+# - typing
