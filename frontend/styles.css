@@ -425,6 +425,33 @@ body {
     animation: contentFadeIn 0.6s ease-out;
 }
 
+/* PRIORITY: Deliverable content gets special styling */
+.deliverable-content {
+    background: rgba(15, 35, 15, 0.8) !important; /* Greenish tint for deliverables */
+    border: 2px solid rgba(76, 175, 80, 0.5) !important;
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.2) !important;
+    animation: deliverablePulse 2s ease-in-out infinite !important;
+}
+
+@keyframes deliverablePulse {
+    0%, 100% { box-shadow: 0 8px 25px rgba(76, 175, 80, 0.2); }
+    50% { box-shadow: 0 8px 30px rgba(76, 175, 80, 0.4); }
+}
+
+.deliverable-content h3 {
+    background: linear-gradient(135deg, #4caf50, #81c784) !important;
+    background-clip: text !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    border-bottom: 2px solid rgba(76, 175, 80, 0.5) !important;
+}
+
+/* Workflow content gets secondary styling */
+.workflow-content {
+    background: rgba(35, 15, 35, 0.6);
+    border: 1px solid rgba(156, 39, 176, 0.3);
+}
+
 @keyframes contentFadeIn {
     from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
@@ -439,6 +466,37 @@ body {
     font-size: 1.3em;
     border-bottom: 2px solid rgba(102, 126, 234, 0.3);
     padding-bottom: 8px;
+}
+
+/* Deliverable Images - Large and prominent */
+.deliverable-image {
+    max-width: 100%;
+    height: auto;
+    max-height: 600px !important; /* Larger for deliverables */
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+    cursor: pointer;
+    transition: all 0.4s ease;
+    border: 2px solid rgba(76, 175, 80, 0.3);
+}
+
+.deliverable-image:hover {
+    transform: translateY(-5px) scale(1.03);
+    box-shadow: 0 15px 40px rgba(76, 175, 80, 0.5);
+    border-color: rgba(76, 175, 80, 0.6);
+}
+
+.deliverable-preview {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.deliverable-info {
+    margin-top: 10px;
+    color: #81c784;
+    font-style: italic;
+    font-size: 0.9em;
 }
 
 .workflow-image,

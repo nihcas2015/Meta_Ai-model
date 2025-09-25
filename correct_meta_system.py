@@ -462,191 +462,154 @@ class Attempt2AgentExecutor:
     """
     Execute the 5 agents from attempt2.py based on workflow decision
     This is the integration point between Meta Model and attempt2
+    Now generates ACTUAL deliverable files instead of text files
     """
     
     def __init__(self, llm: Ollama):
         self.llm = llm
+        # Import the deliverables generator
+        from deliverables_generator import DeliverablesGenerator
+        self.deliverables_gen = DeliverablesGenerator()
         
-    def generate_pdf_report(self, user_query: str, domain_outputs: Dict[str, DomainExpertOutput]) -> str:
-        """Agent 1: PDF Pipeline Report Generation"""
+    def generate_pdf_report(self, user_query: str, domain_outputs: Dict[str, DomainExpertOutput], conversation_id: str = None) -> Dict[str, str]:
+        """Agent 1: Generate ACTUAL PDF Report"""
         logger.info("📄 Executing PDF Report Agent...")
         
-        # Create comprehensive context from domain analyses
-        context = self._create_context_from_domains(user_query, domain_outputs)
+        if not conversation_id:
+            conversation_id = uuid.uuid4().hex[:8]
         
-        prompt = f"""Generate a comprehensive PDF report for: {user_query}
-
-Context from Domain Analysis:
-{context}
-
-Create a detailed professional report covering all aspects analyzed by the domain experts.
-Include executive summary, technical details, recommendations, and next steps.
-
-Report Content:"""
+        # Convert domain outputs to dict format for generator
+        domain_data = {}
+        for domain, output in domain_outputs.items():
+            domain_data[domain] = {
+                'key_findings': output.key_findings,
+                'recommendations': output.recommendations,
+                'analysis': output.analysis,
+                'confidence_score': output.confidence_score
+            }
         
         try:
-            report_content = self.llm.invoke(prompt)
+            # Generate actual PDF file and preview
+            result = self.deliverables_gen.generate_pdf_report(user_query, domain_data, conversation_id)
             
-            # Save to file
-            filename = f"pdf_report_{uuid.uuid4().hex[:8]}.txt"
-            output_file = DATA_DIR / filename
-            with open(output_file, 'w', encoding='utf-8') as f:
-                f.write(f"PDF REPORT: {user_query}\n")
-                f.write("="*50 + "\n\n")
-                f.write(report_content)
-            
-            logger.info(f"✅ PDF report saved to: {output_file}")
-            return str(output_file)
+            logger.info(f"✅ Actual PDF report generated: {result['filename']}")
+            return result
             
         except Exception as e:
             logger.error(f"Error generating PDF report: {e}")
             raise
     
-    def generate_pipeline_diagram(self, user_query: str, domain_outputs: Dict[str, DomainExpertOutput]) -> str:
-        """Agent 2: Generate and Execute Diagram Script"""
+    def generate_pipeline_diagram(self, user_query: str, domain_outputs: Dict[str, DomainExpertOutput], conversation_id: str = None) -> Dict[str, str]:
+        """Agent 2: Generate Visual Pipeline Diagram"""
         logger.info("📊 Executing Pipeline Diagram Agent...")
         
-        context = self._create_context_from_domains(user_query, domain_outputs)
+        if not conversation_id:
+            conversation_id = uuid.uuid4().hex[:8]
         
-        prompt = f"""Generate a pipeline diagram description for: {user_query}
-
-Context from Domain Analysis:
-{context}
-
-Create a detailed description of a visual pipeline/workflow diagram that shows the process flow, 
-components, and relationships based on the domain expert analysis.
-
-Diagram Description:"""
+        # Use the visual generator from deliverables_generator
+        from visual_generator import create_workflow_diagram
         
         try:
-            diagram_description = self.llm.invoke(prompt)
+            # Create workflow visualization
+            diagram_path = create_workflow_diagram(user_query, domain_outputs, conversation_id)
             
-            # Save diagram description
-            filename = f"diagram_script_{uuid.uuid4().hex[:8]}.txt"
-            output_file = DATA_DIR / filename
-            with open(output_file, 'w', encoding='utf-8') as f:
-                f.write(f"PIPELINE DIAGRAM: {user_query}\n")
-                f.write("="*50 + "\n\n")
-                f.write(diagram_description)
+            result = {
+                'deliverable_path': str(diagram_path),
+                'preview_path': str(diagram_path),  # The diagram IS the preview
+                'file_type': 'diagram',
+                'filename': Path(diagram_path).name
+            }
             
-            logger.info(f"✅ Diagram description saved to: {output_file}")
-            return str(output_file)
+            logger.info(f"✅ Pipeline diagram generated: {result['filename']}")
+            return result
             
         except Exception as e:
             logger.error(f"Error generating diagram: {e}")
             raise
     
-    def generate_powerpoint_presentation(self, user_query: str, domain_outputs: Dict[str, DomainExpertOutput]) -> str:
-        """Agent 3: Generate PowerPoint Presentation"""
+    def generate_powerpoint_presentation(self, user_query: str, domain_outputs: Dict[str, DomainExpertOutput], conversation_id: str = None) -> Dict[str, str]:
+        """Agent 3: Generate ACTUAL PowerPoint Presentation"""
         logger.info("📽️ Executing PowerPoint Agent...")
         
-        context = self._create_context_from_domains(user_query, domain_outputs)
+        if not conversation_id:
+            conversation_id = uuid.uuid4().hex[:8]
         
-        prompt = f"""Generate a PowerPoint presentation outline for: {user_query}
-
-Context from Domain Analysis:
-{context}
-
-Create a professional presentation structure with slides covering:
-- Executive Summary
-- Domain Expert Findings (Mechanical, Electrical, Programming)  
-- Recommendations
-- Implementation Plan
-- Conclusion
-
-Presentation Outline:"""
+        # Convert domain outputs to dict format for generator
+        domain_data = {}
+        for domain, output in domain_outputs.items():
+            domain_data[domain] = {
+                'key_findings': output.key_findings,
+                'recommendations': output.recommendations,
+                'analysis': output.analysis,
+                'confidence_score': output.confidence_score
+            }
         
         try:
-            presentation_content = self.llm.invoke(prompt)
+            # Generate actual PowerPoint file and previews
+            result = self.deliverables_gen.generate_powerpoint_presentation(user_query, domain_data, conversation_id)
             
-            # Save presentation outline
-            filename = f"powerpoint_{uuid.uuid4().hex[:8]}.txt"
-            output_file = DATA_DIR / filename
-            with open(output_file, 'w', encoding='utf-8') as f:
-                f.write(f"POWERPOINT PRESENTATION: {user_query}\n")
-                f.write("="*50 + "\n\n")
-                f.write(presentation_content)
-            
-            logger.info(f"✅ PowerPoint outline saved to: {output_file}")
-            return str(output_file)
+            logger.info(f"✅ Actual PowerPoint presentation generated: {result['filename']}")
+            return result
             
         except Exception as e:
             logger.error(f"Error generating PowerPoint: {e}")
             raise
     
-    def generate_word_document(self, user_query: str, domain_outputs: Dict[str, DomainExpertOutput]) -> str:
-        """Agent 4: Generate Word Document"""
+    def generate_word_document(self, user_query: str, domain_outputs: Dict[str, DomainExpertOutput], conversation_id: str = None) -> Dict[str, str]:
+        """Agent 4: Generate ACTUAL Word Document"""
         logger.info("📝 Executing Word Document Agent...")
         
-        context = self._create_context_from_domains(user_query, domain_outputs)
+        if not conversation_id:
+            conversation_id = uuid.uuid4().hex[:8]
         
-        prompt = f"""Generate a detailed Word document for: {user_query}
-
-Context from Domain Analysis:
-{context}
-
-Create a comprehensive technical document with:
-- Introduction and scope
-- Detailed technical analysis from each domain
-- Cross-domain integration considerations
-- Implementation guidelines
-- Risk assessment and mitigation
-- Appendices with supporting data
-
-Document Content:"""
+        # Convert domain outputs to dict format for generator
+        domain_data = {}
+        for domain, output in domain_outputs.items():
+            domain_data[domain] = {
+                'key_findings': output.key_findings,
+                'recommendations': output.recommendations,
+                'analysis': output.analysis,
+                'confidence_score': output.confidence_score
+            }
         
         try:
-            document_content = self.llm.invoke(prompt)
+            # Generate actual Word document file and preview
+            result = self.deliverables_gen.generate_word_document(user_query, domain_data, conversation_id)
             
-            # Save document
-            filename = f"word_document_{uuid.uuid4().hex[:8]}.txt"
-            output_file = DATA_DIR / filename
-            with open(output_file, 'w', encoding='utf-8') as f:
-                f.write(f"WORD DOCUMENT: {user_query}\n")
-                f.write("="*50 + "\n\n")
-                f.write(document_content)
-            
-            logger.info(f"✅ Word document saved to: {output_file}")
-            return str(output_file)
+            logger.info(f"✅ Actual Word document generated: {result['filename']}")
+            return result
             
         except Exception as e:
             logger.error(f"Error generating Word document: {e}")
             raise
     
-    def generate_complex_project(self, user_query: str, domain_outputs: Dict[str, DomainExpertOutput]) -> str:
-        """Agent 5: Generate Project/Code Files"""
+    def generate_complex_project(self, user_query: str, domain_outputs: Dict[str, DomainExpertOutput], conversation_id: str = None) -> Dict[str, str]:
+        """Agent 5: Generate ACTUAL Project Files (ZIP Archive)"""
         logger.info("💻 Executing Complex Project Agent...")
         
-        context = self._create_context_from_domains(user_query, domain_outputs)
+        if not conversation_id:
+            conversation_id = uuid.uuid4().hex[:8]
         
-        prompt = f"""Generate a complex code project structure for: {user_query}
-
-Context from Domain Analysis:
-{context}
-
-Create a detailed software project including:
-- Project architecture and file structure
-- Core implementation files
-- Configuration files
-- Documentation
-- Testing strategy
-- Deployment instructions
-
-Project Structure and Code:"""
+        # Convert domain outputs to dict format for generator
+        domain_data = {}
+        for domain, output in domain_outputs.items():
+            domain_data[domain] = {
+                'key_findings': output.key_findings,
+                'recommendations': output.recommendations,
+                'analysis': output.analysis,
+                'confidence_score': output.confidence_score
+            }
         
         try:
-            project_content = self.llm.invoke(prompt)
+            # Generate actual project files and structure
+            result = self.deliverables_gen.generate_project_files(user_query, domain_data, conversation_id)
             
-            # Save project description
-            filename = f"complex_project_{uuid.uuid4().hex[:8]}.txt"
-            output_file = DATA_DIR / filename  
-            with open(output_file, 'w', encoding='utf-8') as f:
-                f.write(f"COMPLEX PROJECT: {user_query}\n")
-                f.write("="*50 + "\n\n")
-                f.write(project_content)
+            logger.info(f"✅ Actual project files generated: {result['filename']}")
+            return result
             
-            logger.info(f"✅ Complex project saved to: {output_file}")
-            return str(output_file)
+        except Exception as e:
+            logger.error(f"Error generating project files: {e}")
+            raise
             
         except Exception as e:
             logger.error(f"Error generating complex project: {e}")
@@ -725,17 +688,17 @@ class CorrectMetaSystem:
             # STEP 3: Execute workflow - Call attempt2 agents
             print(f"\n🚀 STEP 3: Executing workflow - calling attempt2 {workflow_type} agent...")
             
-            generated_file = None
+            generated_result = None
             if workflow_type == "pdf":
-                generated_file = self.agent_executor.generate_pdf_report(user_query, domain_outputs)
+                generated_result = self.agent_executor.generate_pdf_report(user_query, domain_outputs, conversation_id)
             elif workflow_type == "diagram": 
-                generated_file = self.agent_executor.generate_pipeline_diagram(user_query, domain_outputs)
+                generated_result = self.agent_executor.generate_pipeline_diagram(user_query, domain_outputs, conversation_id)
             elif workflow_type == "powerpoint":
-                generated_file = self.agent_executor.generate_powerpoint_presentation(user_query, domain_outputs)
+                generated_result = self.agent_executor.generate_powerpoint_presentation(user_query, domain_outputs, conversation_id)
             elif workflow_type == "word":
-                generated_file = self.agent_executor.generate_word_document(user_query, domain_outputs)
+                generated_result = self.agent_executor.generate_word_document(user_query, domain_outputs, conversation_id)
             elif workflow_type == "project":
-                generated_file = self.agent_executor.generate_complex_project(user_query, domain_outputs)
+                generated_result = self.agent_executor.generate_complex_project(user_query, domain_outputs, conversation_id)
             else:
                 raise ValueError(f"Unknown workflow type: {workflow_type}")
             
@@ -745,7 +708,7 @@ class CorrectMetaSystem:
                 user_query=user_query,
                 domain_outputs=domain_outputs,
                 workflow_steps={},  # Could expand this later
-                final_outputs=[generated_file]
+                final_outputs=[generated_result]  # Now contains full result dict
             )
             
             state_file = DATA_DIR / f"system_state_{conversation_id}.json"
@@ -762,14 +725,16 @@ class CorrectMetaSystem:
                 json.dump(state_dict, f, indent=2)
             
             print(f"\n🎉 CORRECT WORKFLOW COMPLETED SUCCESSFULLY!")
-            print(f"📁 Generated file: {generated_file}")
+            print(f"📁 Generated deliverable: {generated_result['filename']}")
+            print(f"📄 File type: {generated_result['file_type']}")
+            print(f"🖼️ Preview available: {'Yes' if 'preview_path' in generated_result else 'No'}")
             print(f"💾 System state: {state_file}")
             
             return {
                 "conversation_id": conversation_id,
                 "domain_outputs": domain_outputs,
                 "workflow_type": workflow_type,
-                "generated_file": generated_file,
+                "generated_result": generated_result,  # Full result dict with deliverable and preview paths
                 "system_state_file": str(state_file)
             }
             
@@ -808,7 +773,9 @@ class CorrectMetaSystem:
                 print(f"\n📊 SUMMARY:")
                 print(f"🆔 Conversation ID: {result['conversation_id']}")
                 print(f"🔧 Workflow Type: {result['workflow_type']}")
-                print(f"📁 Generated File: {result['generated_file']}")
+                print(f"📁 Generated Deliverable: {result['generated_result']['filename']}")
+                print(f"📄 File Type: {result['generated_result']['file_type']}")
+                print(f"🖼️ Preview Available: {'Yes' if 'preview_path' in result['generated_result'] else 'No'}")
                 print(f"💾 System State: {result['system_state_file']}")
                 
                 print(f"\n📋 Domain Analysis Summary:")

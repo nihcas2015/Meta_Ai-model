@@ -295,7 +295,16 @@ def process_request():
         
         process_logger.add_log('success', f'Meta AI workflow completed. Conversation ID: {meta_result["conversation_id"]}', 'WORKFLOW')
         
-        # Generate Visual Content
+        # Extract deliverable information
+        generated_result = meta_result.get('generated_result', {})
+        deliverable_path = generated_result.get('deliverable_path', '')
+        preview_path = generated_result.get('preview_path', '')
+        file_type = generated_result.get('file_type', 'unknown')
+        filename = generated_result.get('filename', 'unknown')
+        
+        process_logger.add_log('success', f'Generated {file_type} deliverable: {filename}', 'DELIVERABLES')
+        
+        # Generate Visual Content (including deliverable previews)
         process_logger.add_log('info', 'Generating visual content and previews...', 'VISUAL_GENERATOR')
         
         # Convert domain outputs to dict format for visual generator
@@ -303,12 +312,35 @@ def process_request():
         for domain, output in meta_result['domain_outputs'].items():
             domain_outputs_dict[domain] = asdict(output)
         
+        # Create visual summary with deliverable previews
         visual_content = visual_generator.create_visual_summary(
             meta_result.get('workflow_type', 'pdf'),
             api_request.user_query,
             domain_outputs_dict,
             meta_result['conversation_id']
         )
+        
+        # Add deliverable preview to visual content
+        if preview_path and Path(preview_path).exists():
+            visual_content['deliverable_preview'] = {
+                'path': str(preview_path),
+                'type': file_type,
+                'filename': filename
+            }
+            process_logger.add_log('success', 'Deliverable preview added to visual content', 'VISUAL_GENERATOR')
+        
+        # Handle PowerPoint multiple slide previews
+        if 'preview_paths' in generated_result:  # PowerPoint has multiple slides
+            visual_content['deliverable_previews'] = []
+            for i, slide_path in enumerate(generated_result['preview_paths']):
+                if Path(slide_path).exists():
+                    visual_content['deliverable_previews'].append({
+                        'path': str(slide_path),
+                        'type': f'{file_type}_slide_{i+1}',
+                        'filename': f'Slide {i+1}'
+                    })
+            process_logger.add_log('success', f'Added {len(generated_result["preview_paths"])} slide previews', 'VISUAL_GENERATOR')
+        
         process_logger.add_log('success', f'Visual content generated: {len(visual_content.get("generated_visuals", []))} items', 'VISUAL_GENERATOR')
         
         # Convert image paths to base64 for web display
@@ -336,9 +368,9 @@ def process_request():
             user_query=api_request.user_query,
             domain_outputs={k: asdict(v) for k, v in meta_result['domain_outputs'].items()},
             workflow_type=meta_result.get('workflow_type', 'auto-determined'),
-            generated_file=meta_result.get('generated_file'),
+            generated_file=generated_result,  # Full deliverable result dict
             summary=summary,
-            visual_content=visual_content_web,  # Include visual content
+            visual_content=visual_content_web,  # Include visual content with deliverable previews
             process_logs=process_logger.get_logs()
         )
         
@@ -400,6 +432,28 @@ def prepare_visual_content_for_web(visual_content: Dict, process_logger: Process
         if 'project_structure' in visual_content:
             web_content['project_structure_base64'] = image_to_base64(visual_content['project_structure'])
             process_logger.add_log('success', 'Project structure converted for web display', 'VISUAL_CONVERTER')
+        
+        # NEW: Convert deliverable preview (single file)
+        if 'deliverable_preview' in visual_content:
+            preview_data = visual_content['deliverable_preview']
+            web_content['deliverable_preview_base64'] = {
+                'type': preview_data['type'],
+                'filename': preview_data['filename'],
+                'base64': image_to_base64(preview_data['path'])
+            }
+            process_logger.add_log('success', f'Deliverable preview converted: {preview_data["filename"]}', 'VISUAL_CONVERTER')
+        
+        # NEW: Convert deliverable previews (multiple files like PowerPoint slides)
+        if 'deliverable_previews' in visual_content:
+            preview_base64_list = []
+            for preview_data in visual_content['deliverable_previews']:
+                preview_base64_list.append({
+                    'type': preview_data['type'],
+                    'filename': preview_data['filename'],
+                    'base64': image_to_base64(preview_data['path'])
+                })
+            web_content['deliverable_previews_base64'] = preview_base64_list
+            process_logger.add_log('success', f'Multiple deliverable previews converted: {len(preview_base64_list)} items', 'VISUAL_CONVERTER')
         
         return web_content
         

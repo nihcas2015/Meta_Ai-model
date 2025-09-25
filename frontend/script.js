@@ -303,13 +303,61 @@ function handleBackendResponse(result) {
 function displayVisualContent(visualContent, workflowType) {
     let contentHtml = '';
     
+    // PRIORITY: Display actual deliverable previews first
+    if (visualContent.deliverable_preview_base64) {
+        const deliverable = visualContent.deliverable_preview_base64;
+        contentHtml += `
+            <div class="visual-content deliverable-content">
+                <h3>📄 ${deliverable.type.toUpperCase()} Deliverable: ${deliverable.filename}</h3>
+                <div class="deliverable-preview">
+                    <img src="${deliverable.base64}" alt="${deliverable.filename}" class="deliverable-image" onclick="showDeliverableModal('${deliverable.base64}', '${deliverable.filename}')">
+                    <p class="deliverable-info">Click to view full size</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Handle multiple deliverable previews (like PowerPoint slides)
+    if (visualContent.deliverable_previews_base64) {
+        contentHtml += `
+            <div class="visual-content deliverable-content">
+                <h3>📽️ PowerPoint Presentation - ${visualContent.deliverable_previews_base64.length} Slides</h3>
+                <div class="slides-container">
+        `;
+        
+        visualContent.deliverable_previews_base64.forEach((deliverable, index) => {
+            contentHtml += `
+                <div class="slide-preview">
+                    <p class="slide-title">${deliverable.filename}</p>
+                    <img src="${deliverable.base64}" alt="${deliverable.filename}" class="slide-image" onclick="showDeliverableModal('${deliverable.base64}', '${deliverable.filename}')">
+                </div>
+            `;
+        });
+        
+        contentHtml += `
+                </div>
+            </div>
+        `;
+    }
+    
+    // SECONDARY: Display workflow diagram (always shown)
+    if (visualContent.workflow_diagram_base64) {
+        contentHtml += `
+            <div class="visual-content workflow-content">
+                <h3>🔄 Process Workflow</h3>
+                <img src="${visualContent.workflow_diagram_base64}" alt="Workflow Diagram" class="workflow-image">
+            </div>
+        `;
+    }
+    
+    // LEGACY: Keep existing content types as fallbacks (for backward compatibility)
     switch(workflowType) {
         case 'pdf':
         case 'word':
-            if (visualContent.document_preview_base64) {
+            if (visualContent.document_preview_base64 && !visualContent.deliverable_preview_base64) {
                 contentHtml += `
                     <div class="visual-content">
-                        <h3>📄 Document Preview</h3>
+                        <h3>📄 Document Preview (Legacy)</h3>
                         <img src="${visualContent.document_preview_base64}" alt="Document Preview" class="document-image">
                     </div>
                 `;
@@ -328,10 +376,11 @@ function displayVisualContent(visualContent, workflowType) {
             break;
             
         case 'powerpoint':
-            if (visualContent.powerpoint_slides_base64) {
+            // Legacy PowerPoint display (only if new format not available)
+            if (visualContent.powerpoint_slides_base64 && !visualContent.deliverable_previews_base64) {
                 contentHtml += `
                     <div class="visual-content">
-                        <h3>📽️ PowerPoint Presentation Preview</h3>
+                        <h3>📽️ PowerPoint Presentation Preview (Legacy)</h3>
                         <div class="slides-container">
                 `;
                 
@@ -400,6 +449,23 @@ function showSlideModal(slideBase64, slideNumber) {
     
     modal.style.display = 'block';
     addLogEntry('info', `Opened slide ${slideNumber} preview`);
+}
+
+function showDeliverableModal(deliverableBase64, filename) {
+    const modal = document.getElementById('jsonModal');
+    const jsonContent = document.getElementById('jsonContent');
+    
+    // Replace JSON content with deliverable preview
+    jsonContent.innerHTML = `
+        <h2>📄 ${filename}</h2>
+        <div class="deliverable-modal-content">
+            <img src="${deliverableBase64}" alt="${filename}" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px;">
+            <p style="text-align: center; margin-top: 10px; color: #666;">Full-size deliverable preview</p>
+        </div>
+    `;
+    
+    modal.style.display = 'block';
+    addLogEntry('info', `Opened deliverable preview: ${filename}`);
 }
 
 function showJsonModal() {
