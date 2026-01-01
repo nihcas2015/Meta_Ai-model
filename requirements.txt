@@ -1,25 +1,21 @@
-langchain>=0.0.267
-aiohttp>=3.8.4
-jupyter>=1.0.0
-nbconvert>=7.3.1
+# Meta AI System - Unified Requirements
+# Python 3.8+
 
-# Document generation libraries
+# Core LLM
+langchain-ollama>=0.1.0
+langchain-core>=0.1.0
+
+# Document Generation
 reportlab>=4.0.0
 python-pptx>=0.6.21
 python-docx>=0.8.11
-pdf2image>=3.1.0
-Pillow>=10.0.0
-
-# Visual libraries
 matplotlib>=3.7.0
-seaborn>=0.12.0
 
-# Web framework
+# Web Framework (optional, for API)
 flask>=2.3.0
 flask-cors>=4.0.0
 
-# Ollama for LLM
-ollama>=0.1.0
-
-# Additional utilities
+# Utilities
 requests>=2.28.0
+python-dotenv>=1.0.0
+pydantic>=2.0.0

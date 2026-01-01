@@ -1,103 +1,55 @@
-// Meta AI System - Frontend JavaScript
+// Meta AI System - Simplified Frontend
 
-let currentJsonData = null;
-let uploadedFiles = [];
-
-// Backend API Configuration
 const API_BASE_URL = 'http://localhost:5000/api';
 
-// HARDCODED FILE PATHS - Default locations where files are saved
-const DEFAULT_FILE_PATHS = {
-    // Document paths
-    PDF_DOCUMENTS: 'C:\\Users\\nihca\\OneDrive\\Documents\\vscode\\Meta_Ai model\\outputs\\documents\\',
-    WORD_DOCUMENTS: 'C:\\Users\\nihca\\OneDrive\\Documents\\vscode\\Meta_Ai model\\outputs\\documents\\',
-    POWERPOINT_PRESENTATIONS: 'C:\\Users\\nihca\\OneDrive\\Documents\\vscode\\Meta_Ai model\\outputs\\presentations\\',
-    
-    // Diagram paths
-    WORKFLOW_DIAGRAMS: 'C:\\Users\\nihca\\OneDrive\\Documents\\vscode\\Meta_Ai model\\outputs\\diagrams\\workflow\\',
-    PIPELINE_DIAGRAMS: 'C:\\Users\\nihca\\OneDrive\\Documents\\vscode\\Meta_Ai model\\outputs\\diagrams\\pipeline\\',
-    SYSTEM_DIAGRAMS: 'C:\\Users\\nihca\\OneDrive\\Documents\\vscode\\Meta_Ai model\\outputs\\diagrams\\system\\',
-    
-    // Analysis outputs
-    ANALYSIS_REPORTS: 'C:\\Users\\nihca\\OneDrive\\Documents\\vscode\\Meta_Ai model\\outputs\\analysis\\',
-    TECHNICAL_SPECS: 'C:\\Users\\nihca\\OneDrive\\Documents\\vscode\\Meta_Ai model\\outputs\\specs\\',
-    
-    // CSV and Data files
-    CSV_FILES: 'C:\\Users\\nihca\\OneDrive\\Documents\\vscode\\Meta_Ai model\\data\\',
-    JSON_FILES: 'C:\\Users\\nihca\\OneDrive\\Documents\\vscode\\Meta_Ai model\\data\\',
-    
-    // Default file names (can be customized)
-    DEFAULT_DOCUMENT_NAME: 'meta_ai_analysis_report.pdf',
-    DEFAULT_PRESENTATION_NAME: 'meta_ai_presentation.pptx',
-    DEFAULT_DIAGRAM_NAME: 'workflow_diagram.png',
-    DEFAULT_CSV_NAME: 'analysis_data.csv',
-    DEFAULT_JSON_NAME: 'system_state.json'
-};
-
-// Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
-    initializeEventListeners();
-    updateStatus('Ready');
+    document.getElementById('sendButton').addEventListener('click', sendMessage);
+    document.getElementById('userInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.ctrlKey) sendMessage();
+    });
 });
 
-function initializeEventListeners() {
-    // File upload handling
-    document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+async function sendMessage() {
+    const input = document.getElementById('userInput');
+    const message = input.value.trim();
     
-    // Toggle logs visibility
-    document.getElementById('toggleLogs').addEventListener('click', toggleLogs);
+    if (!message) return;
     
-    // Enter key to send message
-    document.getElementById('userInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-        }
-    });
+    addMessage('user', message);
+    input.value = '';
+    updateStatus('Processing...');
     
-    // Click outside modal to close
-    window.addEventListener('click', function(e) {
-        const modal = document.getElementById('jsonModal');
-        if (e.target === modal) {
-            closeJsonModal();
-        }
-    });
-}
-
-function handleFileUpload(event) {
-    const files = Array.from(event.target.files);
-    
-    files.forEach(file => {
-        if (file.size > 10 * 1024 * 1024) { // 10MB limit
-            addLogEntry('warning', `File ${file.name} exceeds 10MB limit`);
-            return;
-        }
+    try {
+        const response = await fetch(`${API_BASE_URL}/analyze`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: message })
+        });
         
-        uploadedFiles.push(file);
-        addFileTag(file);
-    });
-    
-    if (files.length > 0) {
-        addLogEntry('info', `Uploaded ${files.length} file(s)`);
+        if (!response.ok) throw new Error(`Error: ${response.status}`);
+        const data = await response.json();
+        
+        addMessage('assistant', data.summary || 'Analysis complete');
+        updateStatus('Ready');
+        
+    } catch (error) {
+        addMessage('system', `Error: ${error.message}`);
+        updateStatus('Error');
     }
-    
-    // Clear the input
-    event.target.value = '';
 }
 
-function addFileTag(file) {
-    const filesContainer = document.getElementById('uploadedFiles');
-    const tag = document.createElement('div');
-    tag.className = 'file-tag';
-    tag.innerHTML = `
-        📎 ${file.name} (${formatFileSize(file.size)})
-        <span class="remove" onclick="removeFile('${file.name}')">&times;</span>
-    `;
-    filesContainer.appendChild(tag);
+function addMessage(type, content) {
+    const container = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = `message ${type}`;
+    div.textContent = content;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
 }
 
-function removeFile(fileName) {
-    uploadedFiles = uploadedFiles.filter(file => file.name !== fileName);
+function updateStatus(status) {
+    document.getElementById('status').textContent = status;
+}
     const filesContainer = document.getElementById('uploadedFiles');
     const tags = filesContainer.querySelectorAll('.file-tag');
     tags.forEach(tag => {
