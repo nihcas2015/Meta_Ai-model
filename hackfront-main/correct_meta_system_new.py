@@ -806,7 +806,7 @@ class CorrectMetaSystem:
                 "system_state_file": str(state_file)
             }
             
-        except Exception as e:
+        except Exception as e:pyth
             logger.error(f"Error in correct workflow: {e}")
             raise
     
